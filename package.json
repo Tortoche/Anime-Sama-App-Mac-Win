@@ -1,7 +1,7 @@
 {
   "name": "anime-sama-ultra-pc",
-  "version": "1.0.0",
-  "description": "Le client PC ultime pour Anime-Sama",
+  "version": "1.1.0",
+  "description": "Le client PC ultime pour Anime-Sama avec Sync et Admin",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
