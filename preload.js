@@ -1,11 +1,11 @@
 const { ipcRenderer } = require('electron');
 
 window.addEventListener('DOMContentLoaded', async () => {
-    console.log("🌮 Preload Ultra chargé...");
+    console.log("🌮 Preload Ultra 2.0 chargé...");
     
     const currentUrl = window.location.href;
 
-    // --- 1. BOUSSOLE ---
+    // --- 1. BOUSSOLE (Redirection) ---
     if (currentUrl.includes("anime-sama.pw")) {
         showSplashScreen();
         const interval = setInterval(() => {
@@ -18,10 +18,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     } 
     // --- 2. VRAI SITE ---
     else if (!currentUrl.includes("google")) {
-        // Lancer la sync auto en arrière-plan
+        // Sync auto discrète
         setTimeout(gererSyncAuto, 2000);
         
-        // Si on est sur le profil, on affiche le bouton Logo
+        // Affichage du bouton Admin UNIQUEMENT sur le profil (ou planning pour tester)
         if (currentUrl.includes("/profil")) {
             injecterInterfaceAdmin();
         }
@@ -36,7 +36,7 @@ async function gererSyncAuto() {
     const localLength = localStorage.length;
     const backupLength = Object.keys(backupData).length;
 
-    // Restauration silencieuse
+    // Restauration silencieuse (Site vide, PC plein)
     if (localLength < 2 && backupLength > 0) {
         console.log("♻️ Restauration Auto...");
         for (const key in backupData) {
@@ -44,12 +44,13 @@ async function gererSyncAuto() {
         }
         window.location.reload();
     }
-    // Sauvegarde silencieuse
+    // Sauvegarde silencieuse (Site plein)
     else if (localLength > 5) {
         const currentDataStr = JSON.stringify(localStorage);
         const backupDataStr = JSON.stringify(backupData);
 
         if (currentDataStr !== backupDataStr) {
+            // On capture TOUT le localStorage brut
             let dataToSave = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
@@ -61,10 +62,10 @@ async function gererSyncAuto() {
 }
 
 // ============================================================
-// 🎨 INTERFACE ADMIN (Bouton Logo + Menu)
+// 🎨 INTERFACE ADMIN (Bouton + Menu)
 // ============================================================
 function injecterInterfaceAdmin() {
-    // 1. CSS
+    // 1. CSS (Styles)
     const style = document.createElement('style');
     style.textContent = `
         #btn-admin-logo {
@@ -74,7 +75,7 @@ function injecterInterfaceAdmin() {
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: transform 0.2s;
             border: 2px solid #4F46E5;
-            background: #1a1a1a; /* Fond noir si image transparente */
+            background: #1a1a1a;
         }
         #btn-admin-logo:hover { transform: scale(1.1); }
         
@@ -114,13 +115,13 @@ function injecterInterfaceAdmin() {
     `;
     document.head.appendChild(style);
 
-    // 2. Bouton Logo (On utilise l'URL HTTPS pour être sûr que ça s'affiche)
+    // 2. Bouton Logo (URL Officielle pour éviter l'erreur de fichier local)
     const img = document.createElement('img');
     img.src = "https://anime-sama.fr/template/images/logo_court.png"; 
     img.id = "btn-admin-logo";
     img.title = "Menu Admin Ultra";
     
-    // Événement Clic Bouton Principal
+    // Clic pour ouvrir le menu
     img.addEventListener('click', () => {
         document.getElementById('admin-modal-overlay').style.display = 'flex';
     });
@@ -153,45 +154,47 @@ function injecterInterfaceAdmin() {
     `;
     document.body.appendChild(modalDiv);
 
-    // 4. ATTACHER LES ÉVÉNEMENTS (C'est ici que ça corrige tes boutons qui ne marchaient pas)
+    // 4. ATTACHER LES ÉVÉNEMENTS (C'est la clé du succès !)
     
-    // BOUTON FERMER
+    // Fermer
     document.getElementById('btn-close').addEventListener('click', () => {
         document.getElementById('admin-modal-overlay').style.display = 'none';
     });
 
-    // BOUTON EXPORTER
+    // Exporter
     document.getElementById('btn-export').addEventListener('click', async () => {
         let exportObj = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
+            // On récupère la valeur brute (getItem) pour garder tes formats ["..."]
             exportObj[key] = localStorage.getItem(key);
         }
         
+        // On stringify le tout pour avoir un gros JSON
         const jsonFinal = JSON.stringify(exportObj);
+        
         await ipcRenderer.invoke('copy-to-clipboard', jsonFinal);
         alert("✅ Données copiées dans le presse-papier !");
         document.getElementById('admin-modal-overlay').style.display = 'none';
     });
 
-    // BOUTON IMPORTER
+    // Importer
     document.getElementById('btn-import').addEventListener('click', async () => {
-        // Petit hack pour pouvoir coller sur PC (le prompt bloque parfois)
+        // Le prompt peut être capricieux, mais sur Electron ça passe généralement
+        // Sinon on pourrait créer un <textarea> dans le modal, mais restons simple
         const input = prompt("Collez vos données JSON ici :");
         if (!input) return;
 
         try {
-            // Nettoyage agressif des échappements pour compatibilité
+            // Nettoyage agressif des guillemets échappés (le classique du copier-coller)
             let cleanJson = input;
             
-            // Si c'est encodé deux fois (string dans string)
+            // Si le string commence par une guillemet, c'est peut-être un string JSONifié
             if (cleanJson.startsWith('"') && cleanJson.endsWith('"')) {
                 cleanJson = JSON.parse(cleanJson);
             }
             
-            // On enlève les antislashs en trop si nécessaire
-            cleanJson = cleanJson.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-
+            // On parse le JSON final
             const data = JSON.parse(cleanJson);
             
             // Injection
@@ -199,7 +202,7 @@ function injecterInterfaceAdmin() {
                 localStorage.setItem(key, data[key]);
             }
             
-            // Sauvegarde PC
+            // Sauvegarde PC immédiate
             await ipcRenderer.invoke('save-backup', data);
             
             alert("📥 Importation réussie ! Rechargement...");
@@ -209,7 +212,7 @@ function injecterInterfaceAdmin() {
         }
     });
 
-    // BOUTON RESET
+    // Reset
     document.getElementById('btn-reset').addEventListener('click', async () => {
         if(confirm("⚠️ Attention : Cela va TOUT effacer. Continuer ?")) {
             localStorage.clear();
@@ -232,7 +235,6 @@ function showSplashScreen() {
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         color: white; font-family: sans-serif;
     `;
-    // Ici aussi, lien HTTPS pour être sûr
     div.innerHTML = `
         <img src="https://anime-sama.fr/template/images/logo_court.png" style="width:100px; border-radius:20px; margin-bottom:20px;">
         <h1 style="font-size: 24px;">🚀 Anime-Sama Ultra</h1>
