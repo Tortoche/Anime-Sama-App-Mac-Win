@@ -3,7 +3,6 @@ name: Build Anime-Sama Ultra 🌮
 on:
   workflow_dispatch:
 
-# 👇 AJOUT IMPORTANT : On donne les permissions au robot
 permissions:
   contents: write
 
@@ -24,19 +23,24 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🌯 Installation des Ingrédients
-        run: npm install
+      # Nettoyage spécial pour Windows (évite les bugs de permission)
+      - name: 🧹 Nettoyage Préalable (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+          if (Test-Path package-lock.json) { Remove-Item -Force package-lock.json }
+        shell: pwsh
 
-      - name: 🍳 Cuisine (Build)
-        # 👇 C'EST ICI LA CORRECTION MAGIQUE 👇
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # 👆 FIN DE LA CORRECTION 👆
+      - name: 🌯 Installation des Ingrédients
+        run: npm install --legacy-peer-deps
+
+      - name: 🍳 Cuisine (Build - Sans Publication)
+        # On ajoute "-p never" pour dire : Ne publie pas, donne juste le fichier !
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            npm run dist -- --win
+            npm run dist -- --win -p never
           else
-            npm run dist -- --mac
+            npm run dist -- --mac -p never
           fi
         shell: bash
 
