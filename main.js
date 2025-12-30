@@ -1,10 +1,8 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron'); // Ajout de 'clipboard'
 const path = require('path');
 const Store = require('electron-store');
 
-// Notre coffre-fort local
 const store = new Store();
-
 let mainWindow;
 
 function createWindow() {
@@ -14,7 +12,6 @@ function createWindow() {
     title: "Anime Sama Ultra",
     backgroundColor: '#1a1a1a',
     autoHideMenuBar: true,
-    // C'est ici que la magie du logo opère 👇
     icon: path.join(__dirname, 'build/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -24,10 +21,8 @@ function createWindow() {
     }
   });
 
-  // On charge la boussole
   mainWindow.loadURL('https://anime-sama.pw/');
 
-  // Gestion des liens externes
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.includes('anime-sama')) {
       shell.openExternal(url);
@@ -37,24 +32,34 @@ function createWindow() {
   });
 }
 
-// --- IPC (Valise Diplomatique) ---
+// --- IPC (La Valise Diplomatique) ---
 
+// 1. Sauvegarde Auto
 ipcMain.handle('save-backup', async (event, data) => {
   store.set('localStorageBackup', data);
-  console.log('💾 Sauvegarde effectuée sur le disque PC.');
+  // console.log('💾 Auto-Save OK'); // Décommente pour débugger
   return true;
 });
 
+// 2. Lecture Auto
 ipcMain.handle('get-backup', async () => {
-  const data = store.get('localStorageBackup');
-  console.log('♻️ Lecture du backup PC.');
-  return data || {};
+  return store.get('localStorageBackup') || {};
 });
 
-// Démarrage
+// 3. Reset Total (Nouveau)
+ipcMain.handle('clear-backup', async () => {
+  store.clear();
+  return true;
+});
+
+// 4. Copier dans le presse-papier (Nouveau - Pour l'export)
+ipcMain.handle('copy-to-clipboard', async (event, text) => {
+  clipboard.writeText(text);
+  return true;
+});
+
 app.whenReady().then(() => {
   createWindow();
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
