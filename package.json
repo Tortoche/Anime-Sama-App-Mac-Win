@@ -27,6 +27,8 @@
       "category": "public.app-category.entertainment",
       "target": "dmg",
       "icon": "build/icon.icns"
+      "identity": null    <-- AJOUTE ÇA ICI, AMIGO !
+    },
     },
     "win": {
       "target": "nsis",
