@@ -12,19 +12,19 @@ function createWindow() {
     title: "Anime Sama Ultra",
     backgroundColor: '#1a1a1a',
     autoHideMenuBar: true,
-    // Essaie de charger l'icône, sinon ignore sans planter
+    // Icône de la fenêtre Windows/Mac
     icon: path.join(__dirname, 'build/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      contextIsolation: true, // Sécurité activée (standard moderne)
+      contextIsolation: true, 
       sandbox: false 
     }
   });
 
   mainWindow.loadURL('https://anime-sama.pw/');
 
-  // Bloque les pubs et ouvre les liens externes dans le navigateur par défaut
+  // Gestion des liens externes
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.includes('anime-sama')) {
       shell.openExternal(url);
@@ -34,26 +34,22 @@ function createWindow() {
   });
 }
 
-// --- VALISE DIPLOMATIQUE (Communication) ---
+// --- IPC (Communication avec le Preload) ---
 
-// Sauvegarde Disque
 ipcMain.handle('save-backup', async (event, data) => {
   store.set('localStorageBackup', data);
   return true;
 });
 
-// Lecture Disque
 ipcMain.handle('get-backup', async () => {
   return store.get('localStorageBackup') || {};
 });
 
-// Reset Disque
 ipcMain.handle('clear-backup', async () => {
   store.clear();
   return true;
 });
 
-// Copier dans le presse-papier (Clipboard)
 ipcMain.handle('copy-to-clipboard', async (event, text) => {
   clipboard.writeText(text);
   return true;
