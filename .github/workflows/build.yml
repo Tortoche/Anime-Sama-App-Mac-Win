@@ -1,8 +1,11 @@
 name: Build Anime-Sama Ultra 🌮
 
-# On lance la cuisine quand tu appuies sur le bouton "Run workflow"
 on:
   workflow_dispatch:
+
+# 👇 AJOUT IMPORTANT : On donne les permissions au robot
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -10,7 +13,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # On demande à GitHub d'utiliser un Mac ET un Windows
         os: [macos-latest, windows-latest]
 
     steps:
@@ -26,7 +28,10 @@ jobs:
         run: npm install
 
       - name: 🍳 Cuisine (Build)
-        # La commande change légèrement selon l'OS
+        # 👇 C'EST ICI LA CORRECTION MAGIQUE 👇
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # 👆 FIN DE LA CORRECTION 👆
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             npm run dist -- --win
@@ -42,4 +47,3 @@ jobs:
           path: |
             dist/*.exe
             dist/*.dmg
-            dist/*.zip
