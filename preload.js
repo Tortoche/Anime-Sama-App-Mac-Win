@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { ipcRenderer } = require('electron');
 
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("🌮 Preload Ultra chargé...");
@@ -36,7 +36,7 @@ async function gererSyncAuto() {
     const localLength = localStorage.length;
     const backupLength = Object.keys(backupData).length;
 
-    // Restauration silencieuse si site vide
+    // Restauration silencieuse
     if (localLength < 2 && backupLength > 0) {
         console.log("♻️ Restauration Auto...");
         for (const key in backupData) {
@@ -44,13 +44,12 @@ async function gererSyncAuto() {
         }
         window.location.reload();
     }
-    // Sauvegarde silencieuse si données présentes
+    // Sauvegarde silencieuse
     else if (localLength > 5) {
         const currentDataStr = JSON.stringify(localStorage);
         const backupDataStr = JSON.stringify(backupData);
 
         if (currentDataStr !== backupDataStr) {
-            // On prépare l'objet exactement comme ton format demandé
             let dataToSave = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
@@ -65,7 +64,7 @@ async function gererSyncAuto() {
 // 🎨 INTERFACE ADMIN (Bouton Logo + Menu)
 // ============================================================
 function injecterInterfaceAdmin() {
-    // 1. Injecter le CSS pour le menu
+    // 1. CSS
     const style = document.createElement('style');
     style.textContent = `
         #btn-admin-logo {
@@ -75,6 +74,7 @@ function injecterInterfaceAdmin() {
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: transform 0.2s;
             border: 2px solid #4F46E5;
+            background: #1a1a1a; /* Fond noir si image transparente */
         }
         #btn-admin-logo:hover { transform: scale(1.1); }
         
@@ -90,7 +90,7 @@ function injecterInterfaceAdmin() {
             padding: 30px; border-radius: 20px;
             width: 90%; max-width: 400px;
             text-align: center; border: 1px solid #334155;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: sans-serif;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         
@@ -98,123 +98,141 @@ function injecterInterfaceAdmin() {
             display: block; width: 100%; padding: 15px; margin: 10px 0;
             border: none; border-radius: 10px; cursor: pointer;
             font-size: 16px; font-weight: bold; transition: background 0.2s;
+            color: white;
         }
         
-        .btn-export { background: #0ea5e9; color: white; }
-        .btn-export:hover { background: #0284c7; }
+        #btn-export { background: #0ea5e9; }
+        #btn-export:hover { background: #0284c7; }
         
-        .btn-import { background: #10b981; color: white; }
-        .btn-import:hover { background: #059669; }
+        #btn-import { background: #10b981; }
+        #btn-import:hover { background: #059669; }
         
-        .btn-reset { background: #ef4444; color: white; }
-        .btn-reset:hover { background: #dc2626; }
+        #btn-reset { background: #ef4444; }
+        #btn-reset:hover { background: #dc2626; }
         
-        .btn-close { background: transparent; color: #94a3b8; margin-top: 10px; }
+        #btn-close { background: transparent; color: #94a3b8; margin-top: 10px; }
     `;
     document.head.appendChild(style);
 
-    // 2. Créer le Bouton Logo (Image officielle)
+    // 2. Bouton Logo (On utilise l'URL HTTPS pour être sûr que ça s'affiche)
     const img = document.createElement('img');
-    img.src = "https://anime-sama.fr/template/images/logo_court.png";
+    img.src = "https://anime-sama.fr/template/images/logo_court.png"; 
     img.id = "btn-admin-logo";
     img.title = "Menu Admin Ultra";
-    img.onclick = () => document.getElementById('admin-modal-overlay').style.display = 'flex';
+    
+    // Événement Clic Bouton Principal
+    img.addEventListener('click', () => {
+        document.getElementById('admin-modal-overlay').style.display = 'flex';
+    });
     document.body.appendChild(img);
 
-    // 3. Créer la Fenêtre Modale (Cachée par défaut)
-    const modalHtml = `
-        <div id="admin-modal-overlay">
-            <div class="admin-modal">
-                <img src="https://anime-sama.fr/template/images/logo_court.png" style="width:50px; margin-bottom:15px;">
-                <h2 style="margin:0 0 20px 0;">Gestion des Données</h2>
-                
-                <button class="admin-btn btn-export" onclick="window.exporterData()">
-                    📤 Exporter (Copier)
-                </button>
-                
-                <button class="admin-btn btn-import" onclick="window.importerData()">
-                    📥 Importer (Coller)
-                </button>
-                
-                <button class="admin-btn btn-reset" onclick="window.resetData()">
-                    🗑️ Reset Historique
-                </button>
+    // 3. Fenêtre Modale
+    const modalDiv = document.createElement('div');
+    modalDiv.id = "admin-modal-overlay";
+    modalDiv.innerHTML = `
+        <div class="admin-modal">
+            <img src="https://anime-sama.fr/template/images/logo_court.png" style="width:50px; margin-bottom:15px;">
+            <h2 style="margin:0 0 20px 0;">Gestion des Données</h2>
+            
+            <button id="btn-export" class="admin-btn">
+                📤 Exporter (Copier)
+            </button>
+            
+            <button id="btn-import" class="admin-btn">
+                📥 Importer (Coller)
+            </button>
+            
+            <button id="btn-reset" class="admin-btn">
+                🗑️ Reset Historique
+            </button>
 
-                <button class="admin-btn btn-close" onclick="document.getElementById('admin-modal-overlay').style.display='none'">
-                    Fermer
-                </button>
-            </div>
+            <button id="btn-close" class="admin-btn">
+                Fermer
+            </button>
         </div>
     `;
-    const div = document.createElement('div');
-    div.innerHTML = modalHtml;
-    document.body.appendChild(div);
+    document.body.appendChild(modalDiv);
 
-    // --- FONCTIONS DU MENU ---
+    // 4. ATTACHER LES ÉVÉNEMENTS (C'est ici que ça corrige tes boutons qui ne marchaient pas)
+    
+    // BOUTON FERMER
+    document.getElementById('btn-close').addEventListener('click', () => {
+        document.getElementById('admin-modal-overlay').style.display = 'none';
+    });
 
-    // 1. EXPORTER (Format Brut LocalStorage)
-    window.exporterData = async () => {
-        // On crée un objet simple : Clé -> Valeur (String brute)
+    // BOUTON EXPORTER
+    document.getElementById('btn-export').addEventListener('click', async () => {
         let exportObj = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            // IMPORTANT: On prend la valeur brute (getItem) sans la parser !
-            // Cela garde les [\"...\"] intacts comme tu le veux.
             exportObj[key] = localStorage.getItem(key);
         }
         
         const jsonFinal = JSON.stringify(exportObj);
-        
-        // On envoie au Main Process pour copier
         await ipcRenderer.invoke('copy-to-clipboard', jsonFinal);
         alert("✅ Données copiées dans le presse-papier !");
         document.getElementById('admin-modal-overlay').style.display = 'none';
-    };
+    });
 
-    // 2. IMPORTER
-    window.importerData = async () => {
+    // BOUTON IMPORTER
+    document.getElementById('btn-import').addEventListener('click', async () => {
+        // Petit hack pour pouvoir coller sur PC (le prompt bloque parfois)
         const input = prompt("Collez vos données JSON ici :");
         if (!input) return;
 
         try {
-            const data = JSON.parse(input);
+            // Nettoyage agressif des échappements pour compatibilité
+            let cleanJson = input;
             
-            // On injecte chaque clé directement
+            // Si c'est encodé deux fois (string dans string)
+            if (cleanJson.startsWith('"') && cleanJson.endsWith('"')) {
+                cleanJson = JSON.parse(cleanJson);
+            }
+            
+            // On enlève les antislashs en trop si nécessaire
+            cleanJson = cleanJson.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+
+            const data = JSON.parse(cleanJson);
+            
+            // Injection
             for (const key in data) {
                 localStorage.setItem(key, data[key]);
             }
             
-            // On force une sauvegarde PC immédiate
+            // Sauvegarde PC
             await ipcRenderer.invoke('save-backup', data);
             
             alert("📥 Importation réussie ! Rechargement...");
             window.location.reload();
         } catch (e) {
-            alert("❌ Erreur de format JSON !");
-            console.error(e);
+            alert("❌ Erreur de format JSON !\n" + e.message);
         }
-    };
+    });
 
-    // 3. RESET
-    window.resetData = async () => {
-        if(confirm("⚠️ Attention : Cela va TOUT effacer (PC et Site). Continuer ?")) {
+    // BOUTON RESET
+    document.getElementById('btn-reset').addEventListener('click', async () => {
+        if(confirm("⚠️ Attention : Cela va TOUT effacer. Continuer ?")) {
             localStorage.clear();
             await ipcRenderer.invoke('clear-backup');
             alert("🧹 Tout est propre !");
             window.location.reload();
         }
-    };
+    });
 }
 
 // --- VISUELS SPLASH SCREEN ---
 function showSplashScreen() {
+    if (document.getElementById('loading-overlay')) return;
+    
     const div = document.createElement('div');
+    div.id = 'loading-overlay';
     div.style = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #1a1a1a; z-index: 99999;
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         color: white; font-family: sans-serif;
     `;
+    // Ici aussi, lien HTTPS pour être sûr
     div.innerHTML = `
         <img src="https://anime-sama.fr/template/images/logo_court.png" style="width:100px; border-radius:20px; margin-bottom:20px;">
         <h1 style="font-size: 24px;">🚀 Anime-Sama Ultra</h1>
