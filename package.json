@@ -14,6 +14,10 @@
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tortoche/Anime-Sama-App-Mac-Win.git"
+  },
   "dependencies": {
     "electron-store": "^8.1.0"
   },
