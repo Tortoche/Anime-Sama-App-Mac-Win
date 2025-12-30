@@ -1,7 +1,7 @@
 const { ipcRenderer } = require('electron');
 
 // URL du logo officiel (plus fiable pour l'affichage web)
-const LOGO_URL = "https://anime-sama.fr/template/images/logo_court.png";
+const LOGO_URL = "https://raw.githubusercontent.com/Anime-Sama/IMG/img/autres/logo.png";
 
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("🌮 Preload Ultra chargé...");
