@@ -1,0 +1,45 @@
+name: Build Anime-Sama Ultra 🌮
+
+# On lance la cuisine quand tu appuies sur le bouton "Run workflow"
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # On demande à GitHub d'utiliser un Mac ET un Windows
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: 📥 Récupération du Code
+        uses: actions/checkout@v4
+
+      - name: 💿 Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: 🌯 Installation des Ingrédients
+        run: npm install
+
+      - name: 🍳 Cuisine (Build)
+        # La commande change légèrement selon l'OS
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            npm run dist -- --win
+          else
+            npm run dist -- --mac
+          fi
+        shell: bash
+
+      - name: 📦 Envoi du Colis (Upload)
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
