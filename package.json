@@ -1,7 +1,7 @@
 {
-  "name": "anime-sama-ultra-pc",
+  "name": "anime-sama",
   "version": "1.2.0",
-  "description": "Client PC Anime-Sama avec Style Authentique et Import Robuste",
+  "description": "Client PC Anime-Sama",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
