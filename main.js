@@ -10,9 +10,8 @@ function createWindow() {
     width: 1280,
     height: 720,
     title: "Anime Sama Ultra",
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
     autoHideMenuBar: true,
-    // Icône de la fenêtre Windows/Mac
     icon: path.join(__dirname, 'build/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -24,7 +23,6 @@ function createWindow() {
 
   mainWindow.loadURL('https://anime-sama.pw/');
 
-  // Gestion des liens externes
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.includes('anime-sama')) {
       shell.openExternal(url);
@@ -34,8 +32,7 @@ function createWindow() {
   });
 }
 
-// --- IPC (Communication avec le Preload) ---
-
+// --- IPC (Communications secrètes) ---
 ipcMain.handle('save-backup', async (event, data) => {
   store.set('localStorageBackup', data);
   return true;
