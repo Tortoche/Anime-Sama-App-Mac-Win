@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron'); // Ajout de 'clipboard'
+const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -12,17 +12,19 @@ function createWindow() {
     title: "Anime Sama Ultra",
     backgroundColor: '#1a1a1a',
     autoHideMenuBar: true,
+    // Essaie de charger l'icône, sinon ignore sans planter
     icon: path.join(__dirname, 'build/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: false
+      contextIsolation: true, // Sécurité activée (standard moderne)
+      sandbox: false 
     }
   });
 
   mainWindow.loadURL('https://anime-sama.pw/');
 
+  // Bloque les pubs et ouvre les liens externes dans le navigateur par défaut
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.includes('anime-sama')) {
       shell.openExternal(url);
@@ -32,27 +34,26 @@ function createWindow() {
   });
 }
 
-// --- IPC (La Valise Diplomatique) ---
+// --- VALISE DIPLOMATIQUE (Communication) ---
 
-// 1. Sauvegarde Auto
+// Sauvegarde Disque
 ipcMain.handle('save-backup', async (event, data) => {
   store.set('localStorageBackup', data);
-  // console.log('💾 Auto-Save OK'); // Décommente pour débugger
   return true;
 });
 
-// 2. Lecture Auto
+// Lecture Disque
 ipcMain.handle('get-backup', async () => {
   return store.get('localStorageBackup') || {};
 });
 
-// 3. Reset Total (Nouveau)
+// Reset Disque
 ipcMain.handle('clear-backup', async () => {
   store.clear();
   return true;
 });
 
-// 4. Copier dans le presse-papier (Nouveau - Pour l'export)
+// Copier dans le presse-papier (Clipboard)
 ipcMain.handle('copy-to-clipboard', async (event, text) => {
   clipboard.writeText(text);
   return true;
