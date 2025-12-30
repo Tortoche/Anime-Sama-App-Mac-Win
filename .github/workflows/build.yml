@@ -23,31 +23,19 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🧹 Nettoyage Préalable (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
-          if (Test-Path package-lock.json) { Remove-Item -Force package-lock.json }
-        shell: pwsh
-
       - name: 🌯 Installation des Ingrédients
         run: npm install --legacy-peer-deps
 
-      - name: 🍳 Cuisine (Build)
+      - name: 🍳 Cuisine (Build et Publication)
+        # On définit le token ici pour qu'il soit accessible par electron-builder
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # On force la définition de la variable pour être sûr
-          export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            npm run dist -- --win
-          else
-            npm run dist -- --mac
-          fi
+          # On lance le build. electron-builder détectera le GITHUB_TOKEN automatiquement.
+          npm run dist
         shell: bash
 
-      - name: 📦 Envoi du Colis (Upload)
+      - name: 📦 Envoi du Colis (Upload Artifacts)
         uses: actions/upload-artifact@v4
         with:
           name: App-${{ matrix.os }}
