@@ -1,7 +1,7 @@
 {
   "name": "anime-sama-ultra-pc",
-  "version": "1.1.0",
-  "description": "Le client PC ultime pour Anime-Sama avec Sync et Admin",
+  "version": "1.2.0",
+  "description": "Client PC Anime-Sama avec Style Authentique et Import Robuste",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -31,11 +31,6 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
     }
   }
 }
