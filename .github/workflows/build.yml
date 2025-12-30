@@ -23,7 +23,6 @@ jobs:
         with:
           node-version: 18
 
-      # Nettoyage spécial pour Windows (évite les bugs de permission)
       - name: 🧹 Nettoyage Préalable (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -34,14 +33,11 @@ jobs:
       - name: 🌯 Installation des Ingrédients
         run: npm install --legacy-peer-deps
 
-      - name: 🍳 Cuisine (Build - Sans Publication)
-        # On ajoute "-p never" pour dire : Ne publie pas, donne juste le fichier !
-        run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            npm run dist -- --win -p never
-          else
-            npm run dist -- --mac -p never
-          fi
+      - name: 🍳 Cuisine (Build)
+        # On passe le token ici, même si on ne publie pas, pour calmer le robot
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist
         shell: bash
 
       - name: 📦 Envoi du Colis (Upload)
