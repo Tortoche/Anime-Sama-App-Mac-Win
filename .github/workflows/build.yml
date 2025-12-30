@@ -36,7 +36,15 @@ jobs:
       - name: 🍳 Cuisine (Build)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist
+        run: |
+          # On force la définition de la variable pour être sûr
+          export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            npm run dist -- --win
+          else
+            npm run dist -- --mac
+          fi
         shell: bash
 
       - name: 📦 Envoi du Colis (Upload)
