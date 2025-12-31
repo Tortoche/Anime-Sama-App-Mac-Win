@@ -61,7 +61,7 @@ Ce projet est open-source. Vous pouvez contribuer ou compiler votre propre versi
 ### **Commandes (Version PC/Electron)**
 
 \# Cloner le dépôt  
-git clone \[https://github.com/Tortoche/Anime-Sama-App.git\](https://github.com/Tortoche/Anime-Sama-App.git)
+git clone https://github.com/Tortoche/Anime-Sama-App.git
 
 \# Installer les dépendances  
 npm install
