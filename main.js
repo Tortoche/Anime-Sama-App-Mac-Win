@@ -21,58 +21,44 @@ function createWindow() {
     }
   });
 
+  // User Agent modifié pour éviter certaines détections de bot/adblock
+  mainWindow.webContents.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
   mainWindow.loadURL('https://anime-sama.pw/');
 
-  // GESTION INTELLIGENTE DES LIENS EXTERNES (Anti-Pub & Sécurité)
+  // --- GESTION DES FENÊTRES EXTERNES (Le Mur) ---
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     const lowerUrl = url.toLowerCase();
 
-    // 1. Liste Blanche : Domaines de confiance (Ouvrir dans le navigateur par défaut)
-    const whitelist = [
+    // 1. Liste Blanche : Domaines autorisés à s'ouvrir DANS TON NAVIGATEUR PAR DÉFAUT (Chrome/Edge)
+    const externalWhitelist = [
       'discord.com', 'discord.gg',
       'paypal.com', 'paypal.me',
       'twitter.com', 'x.com',
       'instagram.com',
-      'github.com'
+      'github.com',
+      'ko-fi.com', 'tipeee.com'
     ];
 
-    // 2. Liste Noire : Pubs connues (Bloquer impérativement)
-    const blacklist = [
-      'betclic', 'winamax', 'adservice', 'doubleclick', 
-      'googleads', 'popcash', 'popads', 'monetag'
-    ];
+    // 2. Liste Blanche Interne : Domaines autorisés DANS L'APP (Lecteurs vidéo, Captcha...)
+    // Attention : On n'ouvre JAMAIS de nouvelle fenêtre pour un lecteur vidéo dans l'app,
+    // ils doivent rester dans l'iframe. Donc si un lecteur demande une nouvelle fenêtre, c'est souvent une pub.
+    // Sauf exception (ex: lien de téléchargement légitime).
 
-    // VÉRIFICATION
-    const isTrusted = whitelist.some(domain => lowerUrl.includes(domain));
-    const isAd = blacklist.some(ad => lowerUrl.includes(ad));
-    const isInternal = lowerUrl.includes('anime-sama');
-
-    // A. Si c'est un lien de confiance -> Ouvrir dans Chrome/Edge
-    if (isTrusted) {
+    // A. Liens Externes de Confiance -> Ouvrir dans le navigateur système
+    if (externalWhitelist.some(domain => lowerUrl.includes(domain))) {
       shell.openExternal(url);
       return { action: 'deny' };
     }
 
-    // B. Si c'est une pub connue -> BLOQUER
-    if (isAd) {
-      console.log("🚫 Pub bloquée (Blacklist) : " + url);
-      return { action: 'deny' };
-    }
-
-    // C. Si c'est un lien interne (ex: changement de domaine anime-sama) -> AUTORISER DANS L'APP
-    if (isInternal) {
-      return { action: 'allow' };
-    }
-
-    // D. Pour tout le reste (liens inconnus, potentiellement pubs) -> BLOQUER PAR PRÉCAUTION
-    // Si un jour le site change de lien PayPal et que ça bloque, tu devras mettre à jour l'app.
-    // C'est le prix de la sécurité "El Muro".
-    console.log("🚫 Lien inconnu bloqué : " + url);
+    // B. Tout le reste (Pubs, Popups de lecteurs, Sites inconnus) -> BLOQUER
+    // Les lecteurs vidéo (Sibnet, etc.) essaient d'ouvrir des pubs en popup. On dit NON.
+    console.log("🚫 Popup bloquée par Main : " + url);
     return { action: 'deny' };
   });
 }
 
-// --- IPC (Communications secrètes) ---
+// --- IPC ---
 ipcMain.handle('save-backup', async (event, data) => {
   store.set('localStorageBackup', data);
   return true;
