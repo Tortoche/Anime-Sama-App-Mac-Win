@@ -8,7 +8,7 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
-  "author": "El Patron",
+  "author": "Tortoche",
   "license": "ISC",
   "devDependencies": {
     "electron": "^28.0.0",
@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.animesama.pc",
-    "productName": "Anime Sama Ultra",
+    "productName": "Anime Sama",
     "directories": {
       "buildResources": "build"
     },
