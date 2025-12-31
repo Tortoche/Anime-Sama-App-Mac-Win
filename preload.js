@@ -4,7 +4,7 @@ const { ipcRenderer } = require('electron');
 const LOGO_URL = "https://raw.githubusercontent.com/Anime-Sama/IMG/img/autres/logo.png";
 
 window.addEventListener('DOMContentLoaded', async () => {
-    console.log("🌮 Preload Ultra chargé...");
+    console.log("🌮 Preload chargé...");
     
     const currentUrl = window.location.href;
 
