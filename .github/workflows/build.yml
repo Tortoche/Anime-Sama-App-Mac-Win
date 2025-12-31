@@ -1,4 +1,4 @@
-name: Build Anime-Sama Ultra 🌮
+name: Build Anime-Sama
 
 on:
   workflow_dispatch:
