@@ -1,6 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-// URL du logo officiel
 const LOGO_URL = "https://raw.githubusercontent.com/Anime-Sama/IMG/img/autres/logo.png";
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -8,7 +7,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     const currentUrl = window.location.href;
 
-    // --- 1. BOUSSOLE ---
     if (currentUrl.includes("anime-sama.pw")) {
         showSplashScreen();
         const interval = setInterval(() => {
@@ -19,37 +17,34 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         }, 500);
     } 
-    // --- 2. VRAI SITE ---
     else if (!currentUrl.includes("google")) {
-        // Lancer l'Anti-Pub
-        initAdBlocker();
+        // Lancer la protection maximale
+        activateAdShield();
 
-        // Sync auto
         setTimeout(gererSyncAuto, 2500);
         
-        // Bouton Admin
         if (currentUrl.includes("/profil") || currentUrl.includes("/planning")) {
             injecterInterfaceAdmin();
         }
     }
 });
 
-// --- 🛡️ AD BLOCKER (DEFUSER) ---
-function initAdBlocker() {
-    console.log("🛡️ Anti-Pub PC (Defuser) activé");
+// --- 🛡️ AD SHIELD (PROTECTION AVANCÉE) ---
+function activateAdShield() {
+    console.log("🛡️ Bouclier Anti-Pub activé");
 
-    // A. Masquage Visuel (CSS)
+    // 1. CSS Anti-Pub (Masque les bannières visibles)
     const style = document.createElement('style');
     style.textContent = `
         #ads, .ads, .ad-banner, [id^='ad-'], [class^='ad-'],
         iframe[src*='google'], iframe[src*='doubleclick'], iframe[src*='outbrain'],
         .popup-container, .popover, .floating-ad, div[id*='taboola'],
-        a[href*='betclic'], a[href*='winamax']
+        a[href*='betclic'], a[href*='winamax'], div[class*='monitor']
         { display: none !important; pointer-events: none !important; height: 0 !important; width: 0 !important; }
     `;
     document.head.appendChild(style);
 
-    // B. Nettoyeur d'éléments (MutationObserver)
+    // 2. Nettoyeur DOM (Supprime les éléments intrusifs)
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -61,11 +56,12 @@ function initAdBlocker() {
                             node.remove();
                         }
                     }
-                    // Supprimer overlays invisibles
-                    if (getComputedStyle(node).position === 'absolute' && getComputedStyle(node).zIndex > 9999) {
+                    // Supprimer overlays invisibles qui capturent le clic
+                    if (getComputedStyle(node).position === 'absolute' && getComputedStyle(node).zIndex > 9000) {
+                        // On protège nos propres éléments (Admin, Splash)
                         if (node.id !== 'admin-modal-overlay' && node.id !== 'btn-admin-logo' && node.id !== 'loading-overlay') {
-                            node.style.pointerEvents = 'none';
                             node.style.display = 'none';
+                            node.style.pointerEvents = 'none';
                         }
                     }
                 }
@@ -74,12 +70,36 @@ function initAdBlocker() {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // C. Neutralisation de window.open (Le Désamorceur)
-    // Empêche les lecteurs vidéo d'ouvrir des popups
-    window.open = function(url) {
-        console.log('🚫 Popup PC désamorcée :', url);
+    // 3. NEUTRALISATION DE window.open (Le Désamorceur)
+    // C'est ce que les lecteurs vidéo utilisent pour ouvrir les pubs en arrière-plan.
+    // On remplace la fonction par une coquille vide qui renvoie null.
+    // Le lecteur pense avoir ouvert sa pub, mais rien ne se passe.
+    window.open = function(url, target, features) {
+        console.log('🚫 Popup JS désamorcée :', url);
         return null; 
     };
+
+    // 4. INTERCEPTEUR DE CLICS (Le Gardien)
+    // Empêche les liens _blank malveillants de s'ouvrir
+    document.addEventListener('click', function(e) {
+        // Remonter jusqu'au lien <a> si on clique sur une image/div dedans
+        const link = e.target.closest('a');
+        
+        if (link && link.target === '_blank') {
+            const href = link.href.toLowerCase();
+            
+            // Liste blanche stricte pour les liens qui ouvrent des onglets
+            const safeDomains = ['anime-sama', 'discord', 'paypal', 'twitter', 'instagram'];
+            const isSafe = safeDomains.some(d => href.includes(d));
+
+            // Si le lien n'est pas sûr, on tue l'événement
+            if (!isSafe) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("🚫 Clic pub bloqué vers :", href);
+            }
+        }
+    }, true); // 'true' pour capturer l'événement avant tout le monde (Capturing phase)
 }
 
 // --- SYNC AUTO ---
@@ -102,17 +122,15 @@ async function gererSyncAuto() {
     }
 }
 
-// --- INTERFACE ADMIN (DESIGN PRO) ---
+// --- INTERFACE ADMIN (Design Pro) ---
 function injecterInterfaceAdmin() {
     if (document.getElementById('btn-admin-logo')) return;
 
-    // Injection de la police Montserrat (pour matcher ton index.html)
     const fontLink = document.createElement('link');
     fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap";
     fontLink.rel = "stylesheet";
     document.head.appendChild(fontLink);
 
-    // CSS basé EXACTEMENT sur ton index.html
     const style = document.createElement('style');
     style.textContent = `
         #btn-admin-logo {
@@ -127,14 +145,14 @@ function injecterInterfaceAdmin() {
 
         #admin-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Fond noir sombre */
+            background-color: rgba(0, 0, 0, 0.85);
             z-index: 999999;
             display: none; justify-content: center; align-items: center;
             font-family: 'Montserrat', sans-serif;
         }
 
         .admin-card {
-            background-color: #050b14; /* Bleu très sombre */
+            background-color: #050b14;
             width: 90%; max-width: 450px;
             padding: 30px;
             border-radius: 20px;
@@ -161,13 +179,13 @@ function injecterInterfaceAdmin() {
         }
 
         .btn-red {
-            border: 2px solid #3d1a20; /* Rouge bordeaux */
+            border: 2px solid #3d1a20;
             box-shadow: inset 0 0 10px rgba(61, 26, 32, 0.5);
         }
         .btn-red:hover { border-color: #ff4444; }
 
         .btn-blue-outline {
-            border: 2px solid #0f2336; /* Bleu foncé */
+            border: 2px solid #0f2336;
             box-shadow: inset 0 0 10px rgba(15, 35, 54, 0.5);
         }
         .btn-blue-outline:hover { border-color: #1a3c5e; }
@@ -188,7 +206,7 @@ function injecterInterfaceAdmin() {
 
         .btn-confirm {
             width: 100%; padding: 18px;
-            background-color: #0ea5e9; /* Cyan */
+            background-color: #0ea5e9;
             color: #000;
             border: none; border-radius: 8px;
             font-size: 15px; font-weight: 900;
@@ -205,14 +223,12 @@ function injecterInterfaceAdmin() {
     `;
     document.head.appendChild(style);
 
-    // Bouton
     const img = document.createElement('img');
     img.src = LOGO_URL;
     img.id = "btn-admin-logo";
     img.onclick = () => document.getElementById('admin-modal-overlay').style.display = 'flex';
     document.body.appendChild(img);
 
-    // Modale
     const modalDiv = document.createElement('div');
     modalDiv.id = "admin-modal-overlay";
     modalDiv.innerHTML = `
