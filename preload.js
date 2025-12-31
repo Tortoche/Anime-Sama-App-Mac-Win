@@ -1,10 +1,10 @@
 const { ipcRenderer } = require('electron');
 
-// URL du logo officiel (plus fiable pour l'affichage web)
+// URL du logo officiel
 const LOGO_URL = "https://raw.githubusercontent.com/Anime-Sama/IMG/img/autres/logo.png";
 
 window.addEventListener('DOMContentLoaded', async () => {
-    console.log("🌮 Preload chargé...");
+    console.log("🌮 Preload PC chargé...");
     
     const currentUrl = window.location.href;
 
@@ -21,15 +21,68 @@ window.addEventListener('DOMContentLoaded', async () => {
     } 
     // --- 2. VRAI SITE ---
     else if (!currentUrl.includes("google")) {
+        // Lancer l'Anti-Pub
+        initAdBlocker();
+
+        // Sync auto
         setTimeout(gererSyncAuto, 2500);
         
-        // Bouton Admin en haut à droite sur le profil
-        if (currentUrl.includes("/profil")) {
+        // Bouton Admin
+        if (currentUrl.includes("/profil") || currentUrl.includes("/planning")) {
             injecterInterfaceAdmin();
         }
     }
 });
 
+// --- 🛡️ AD BLOCKER (DEFUSER) ---
+function initAdBlocker() {
+    console.log("🛡️ Anti-Pub PC (Defuser) activé");
+
+    // A. Masquage Visuel (CSS)
+    const style = document.createElement('style');
+    style.textContent = `
+        #ads, .ads, .ad-banner, [id^='ad-'], [class^='ad-'],
+        iframe[src*='google'], iframe[src*='doubleclick'], iframe[src*='outbrain'],
+        .popup-container, .popover, .floating-ad, div[id*='taboola'],
+        a[href*='betclic'], a[href*='winamax']
+        { display: none !important; pointer-events: none !important; height: 0 !important; width: 0 !important; }
+    `;
+    document.head.appendChild(style);
+
+    // B. Nettoyeur d'éléments (MutationObserver)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) {
+                    // Supprimer iframes pubs
+                    if (node.tagName === 'IFRAME') {
+                        const src = (node.src || '').toLowerCase();
+                        if (src.includes('google') || src.includes('adservice') || src.includes('analytics')) {
+                            node.remove();
+                        }
+                    }
+                    // Supprimer overlays invisibles
+                    if (getComputedStyle(node).position === 'absolute' && getComputedStyle(node).zIndex > 9999) {
+                        if (node.id !== 'admin-modal-overlay' && node.id !== 'btn-admin-logo' && node.id !== 'loading-overlay') {
+                            node.style.pointerEvents = 'none';
+                            node.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // C. Neutralisation de window.open (Le Désamorceur)
+    // Empêche les lecteurs vidéo d'ouvrir des popups
+    window.open = function(url) {
+        console.log('🚫 Popup PC désamorcée :', url);
+        return null; 
+    };
+}
+
+// --- SYNC AUTO ---
 async function gererSyncAuto() {
     const backupData = await ipcRenderer.invoke('get-backup');
     const localLength = localStorage.length;
@@ -49,141 +102,183 @@ async function gererSyncAuto() {
     }
 }
 
+// --- INTERFACE ADMIN (DESIGN PRO) ---
 function injecterInterfaceAdmin() {
-    // 1. CSS (Inspiré par ton fichier CSS Anime Sama)
+    if (document.getElementById('btn-admin-logo')) return;
+
+    // Injection de la police Montserrat (pour matcher ton index.html)
+    const fontLink = document.createElement('link');
+    fontLink.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap";
+    fontLink.rel = "stylesheet";
+    document.head.appendChild(fontLink);
+
+    // CSS basé EXACTEMENT sur ton index.html
     const style = document.createElement('style');
     style.textContent = `
         #btn-admin-logo {
-            position: fixed; top: 15px; right: 15px;
-            width: 50px; height: 50px; border-radius: 8px;
-            cursor: pointer; z-index: 999999;
-            box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(70, 100, 150, 0.4);
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
-            padding: 5px;
+            position: fixed; top: 100px; right: 20px;
+            width: 55px; height: 55px; cursor: pointer; z-index: 999990;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.5));
+            border-radius: 50%; border: 2px solid #0ea5e9;
+            object-fit: cover;
         }
-        #btn-admin-logo:hover { 
-            transform: scale(1.05); 
-            border-color: #0ea5e9;
-            box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
-        }
-        
+        #btn-admin-logo:hover { transform: scale(1.1); }
+
         #admin-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); z-index: 1000000;
+            background-color: rgba(0, 0, 0, 0.85); /* Fond noir sombre */
+            z-index: 999999;
             display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(12px);
-            font-family: sans-serif;
+            font-family: 'Montserrat', sans-serif;
         }
-        
-        .admin-modal {
-            background: rgba(10, 18, 29, 0.95);
-            color: white; padding: 2rem; border-radius: 1rem;
-            width: 380px; text-align: center;
-            border: 1px solid rgba(70, 100, 150, 0.2);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-        }
-        
-        .admin-btn {
-            display: block; width: 100%; padding: 0.75rem; margin: 0.5rem 0;
-            border: 1px solid rgba(14, 165, 233, 0.3);
-            border-radius: 0.5rem; cursor: pointer;
-            font-size: 0.85rem; font-weight: 800; text-transform: uppercase;
-            color: #ffffff; background: rgba(30, 50, 80, 0.4);
-            transition: all 0.3s ease;
-        }
-        
-        .admin-btn:hover {
-            background: rgba(14, 165, 233, 0.2);
-            border-color: #0ea5e9;
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
-        }
-        
-        .btn-reset { border-color: rgba(239, 68, 68, 0.5); }
-        .btn-reset:hover { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; }
 
-        #import-zone { 
-            display: none; margin-top: 1rem; padding-top: 1rem;
-            border-top: 1px solid rgba(70, 100, 150, 0.2);
+        .admin-card {
+            background-color: #050b14; /* Bleu très sombre */
+            width: 90%; max-width: 450px;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #1c2533;
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
         }
-        #import-area {
-            width: 100%; height: 120px; background: rgba(0,0,0,0.5);
-            color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.2);
-            border-radius: 0.5rem; font-family: monospace; font-size: 10px;
-            padding: 0.5rem; outline: none; margin-bottom: 0.5rem;
+
+        .logo-container { width: 100%; display: flex; justify-content: flex-start; margin-bottom: 20px; }
+        .admin-logo { width: 50px; height: auto; }
+
+        .admin-title {
+            color: white; font-size: 16px; text-transform: uppercase;
+            margin-bottom: 25px; font-weight: 600; letter-spacing: 0.5px;
         }
-        #btn-confirm-import { background: #0ea5e9; color: black; }
+
+        .btn-option {
+            width: 100%; padding: 18px; margin-bottom: 12px;
+            background-color: transparent; border-radius: 10px;
+            color: white; font-size: 14px; font-weight: 800;
+            text-transform: uppercase; cursor: pointer; text-align: center;
+            transition: 0.2s;
+        }
+
+        .btn-red {
+            border: 2px solid #3d1a20; /* Rouge bordeaux */
+            box-shadow: inset 0 0 10px rgba(61, 26, 32, 0.5);
+        }
+        .btn-red:hover { border-color: #ff4444; }
+
+        .btn-blue-outline {
+            border: 2px solid #0f2336; /* Bleu foncé */
+            box-shadow: inset 0 0 10px rgba(15, 35, 54, 0.5);
+        }
+        .btn-blue-outline:hover { border-color: #1a3c5e; }
+
+        .admin-divider {
+            width: 100%; height: 1px; background-color: #1c2533; margin: 15px 0;
+        }
+
+        #importArea {
+            width: 100%; height: 120px;
+            background-color: #03060a;
+            border: 1px solid #1c2533; border-radius: 10px;
+            color: #a0a0a0; padding: 15px;
+            font-family: 'Courier New', monospace; font-size: 12px;
+            resize: none; outline: none; margin-bottom: 20px;
+        }
+        #importArea::placeholder { color: #555; }
+
+        .btn-confirm {
+            width: 100%; padding: 18px;
+            background-color: #0ea5e9; /* Cyan */
+            color: #000;
+            border: none; border-radius: 8px;
+            font-size: 15px; font-weight: 900;
+            text-transform: uppercase; cursor: pointer; margin-bottom: 25px;
+        }
+        .btn-confirm:hover { background-color: #38bdf8; }
+
+        .btn-close {
+            background: none; border: none; color: #64748b;
+            font-weight: 900; text-transform: uppercase;
+            font-size: 13px; cursor: pointer;
+        }
+        .btn-close:hover { color: white; }
     `;
     document.head.appendChild(style);
 
-    // 2. Bouton Logo
+    // Bouton
     const img = document.createElement('img');
     img.src = LOGO_URL;
     img.id = "btn-admin-logo";
-    img.title = "Options Ultra";
+    img.onclick = () => document.getElementById('admin-modal-overlay').style.display = 'flex';
     document.body.appendChild(img);
 
-    // 3. Modal structure
+    // Modale
     const modalDiv = document.createElement('div');
     modalDiv.id = "admin-modal-overlay";
     modalDiv.innerHTML = `
-        <div class="admin-modal">
-            <img src="${LOGO_URL}" style="height: 40px; margin-bottom: 1.5rem;">
-            <h4 style="margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.9rem;">Options Administrateur</h4>
-            
-            <button id="btn-reset" class="admin-btn btn-reset">1. Vider l'historique (Reset)</button>
-            <button id="btn-export" class="admin-btn">2. Exporter la progression (Copier)</button>
-            <button id="btn-import-toggle" class="admin-btn">3. Importer des données (Coller)</button>
-            
-            <div id="import-zone">
-                <textarea id="import-area" placeholder="Collez votre JSON ici..."></textarea>
-                <button id="btn-confirm-import" class="admin-btn">Confirmer l'importation</button>
+        <div class="admin-card">
+            <div class="logo-container">
+                <img src="${LOGO_URL}" class="admin-logo">
             </div>
 
-            <button id="btn-close" class="admin-btn" style="background: transparent; border: none; opacity: 0.5; font-size: 0.7rem;">Fermer</button>
+            <h1 class="admin-title">Options Administrateur</h1>
+
+            <button id="btn-reset" class="btn-option btn-red">
+                1. Vider l'historique (Reset)
+            </button>
+
+            <button id="btn-export" class="btn-option btn-blue-outline">
+                2. Exporter la progression <br>(Copier)
+            </button>
+
+            <button id="btn-import-toggle" class="btn-option btn-blue-outline">
+                3. Importer des données (Coller)
+            </button>
+
+            <div class="admin-divider"></div>
+
+            <textarea id="importArea" placeholder="Collez votre JSON ici..."></textarea>
+
+            <button id="btn-confirm-import" class="btn-confirm">
+                Confirmer l'importation
+            </button>
+
+            <button id="btn-close" class="btn-close">
+                Fermer
+            </button>
         </div>
     `;
     document.body.appendChild(modalDiv);
 
-    // --- LOGIQUE DES BOUTONS (Attachée proprement) ---
+    // EVENEMENTS
+    document.getElementById('btn-close').onclick = () => {
+        document.getElementById('admin-modal-overlay').style.display = 'none';
+    };
 
-    const overlay = document.getElementById('admin-modal-overlay');
-
-    img.onclick = () => { overlay.style.display = 'flex'; };
-
-    document.getElementById('btn-close').onclick = () => { overlay.style.display = 'none'; };
-
-    // RESET
     document.getElementById('btn-reset').onclick = async () => {
-        if (confirm("¡Cuidado! Cela va supprimer ton historique local et sur le PC. Continuer ?")) {
+        if (confirm("⚠ WARNING : Tout effacer ?")) {
             localStorage.clear();
             await ipcRenderer.invoke('clear-backup');
             location.reload();
         }
     };
 
-    // EXPORT
     document.getElementById('btn-export').onclick = async () => {
         let data = {};
         for (let i = 0; i < localStorage.length; i++) {
-            data[localStorage.key(i)] = localStorage.getItem(localStorage.key(i));
+            const key = localStorage.key(i);
+            data[key] = localStorage.getItem(key);
         }
         await ipcRenderer.invoke('copy-to-clipboard', JSON.stringify(data));
-        alert("✅ Progression copiée dans le presse-papier, hermano !");
-        overlay.style.display = 'none';
+        alert("✅ Progression copiée dans le presse-papier !");
     };
 
-    // TOGGLE IMPORT ZONE
     document.getElementById('btn-import-toggle').onclick = () => {
-        const zone = document.getElementById('import-zone');
-        zone.style.display = (zone.style.display === 'block') ? 'none' : 'block';
+        document.getElementById('importArea').focus();
     };
 
-    // CONFIRM IMPORT
     document.getElementById('btn-confirm-import').onclick = async () => {
-        const raw = document.getElementById('import-area').value.trim();
+        const raw = document.getElementById('importArea').value.trim();
         if (!raw) return;
 
         try {
@@ -193,16 +288,17 @@ function injecterInterfaceAdmin() {
                 localStorage.setItem(key, data[key]);
             }
             await ipcRenderer.invoke('save-backup', data);
-            alert("📥 Importation réussie ! L'application va redémarrer.");
+            alert("📥 Importation réussie !");
             location.reload();
         } catch (e) {
-            alert("❌ Erreur de format ! Assure-toi d'avoir copié tout le JSON. ¡Qué pena!");
+            alert("❌ Erreur de format !");
             console.error(e);
         }
     };
 }
 
 function showSplashScreen() {
+    if (document.getElementById('loading-overlay')) return;
     const div = document.createElement('div');
     div.id = 'loading-overlay';
     div.style = `
