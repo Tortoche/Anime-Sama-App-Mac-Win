@@ -9,7 +9,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
-    title: "Anime Sama Ultra",
+    title: "Anime Sama",
     backgroundColor: '#000000',
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'build/icon.png'),
