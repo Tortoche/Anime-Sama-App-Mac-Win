@@ -23,12 +23,52 @@ function createWindow() {
 
   mainWindow.loadURL('https://anime-sama.pw/');
 
+  // GESTION INTELLIGENTE DES LIENS EXTERNES (Anti-Pub & Sécurité)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.includes('anime-sama')) {
+    const lowerUrl = url.toLowerCase();
+
+    // 1. Liste Blanche : Domaines de confiance (Ouvrir dans le navigateur par défaut)
+    const whitelist = [
+      'discord.com', 'discord.gg',
+      'paypal.com', 'paypal.me',
+      'twitter.com', 'x.com',
+      'instagram.com',
+      'github.com'
+    ];
+
+    // 2. Liste Noire : Pubs connues (Bloquer impérativement)
+    const blacklist = [
+      'betclic', 'winamax', 'adservice', 'doubleclick', 
+      'googleads', 'popcash', 'popads', 'monetag'
+    ];
+
+    // VÉRIFICATION
+    const isTrusted = whitelist.some(domain => lowerUrl.includes(domain));
+    const isAd = blacklist.some(ad => lowerUrl.includes(ad));
+    const isInternal = lowerUrl.includes('anime-sama');
+
+    // A. Si c'est un lien de confiance -> Ouvrir dans Chrome/Edge
+    if (isTrusted) {
       shell.openExternal(url);
       return { action: 'deny' };
     }
-    return { action: 'allow' };
+
+    // B. Si c'est une pub connue -> BLOQUER
+    if (isAd) {
+      console.log("🚫 Pub bloquée (Blacklist) : " + url);
+      return { action: 'deny' };
+    }
+
+    // C. Si c'est un lien interne (ex: changement de domaine anime-sama) -> AUTORISER DANS L'APP
+    if (isInternal) {
+      return { action: 'allow' };
+    }
+
+    // D. Pour tout le reste (liens inconnus, potentiellement pubs) -> BLOQUER PAR PRÉCAUTION
+    // Si un jour le site change de lien PayPal et que ça bloque, tu devras mettre à jour l'app.
+    // C'est le prix de la sécurité "El Muro".
+    console.log("🚫 Lien inconnu bloqué : " + url);
+    return { action: 'deny' };
   });
 }
 
